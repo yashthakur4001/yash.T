@@ -1,3 +1,106 @@
 # cybersecurity_intern_task1_password_generator.py
+# Author: [Yash Thakur]
+# Description: Generates a secure password based on user-defined length,
+#              ensuring inclusion of uppercase, lowercase, digits, and special characters.
 
-Author - Yash Thakur
+import secrets # Using secrets for cryptographically stronger random generation
+import string
+import sys # Used for exiting cleanly if conditions aren't met
+
+def generate_secure_password(length):
+    """
+    Generates a secure password with the specified length, ensuring all required character types are present.
+
+    Args:
+        length (int): The desired length of the password.
+
+    Returns:
+        str: The generated secure password, or None if length is insufficient.
+    """
+
+    # Define the character sets
+    lowercase_letters = string.ascii_lowercase
+    uppercase_letters = string.ascii_uppercase
+    digits = string.digits
+    # Using string.punctuation for a standard set of special characters
+    special_chars = string.punctuation
+
+    # --- Requirement: Ensure the password includes uppercase, lowercase, digits, and special characters ---
+    # Check if the length is sufficient to include at least one of each type
+    if length < 4:
+        print("Error: Password length must be at least 4 to include all required character types (uppercase, lowercase, digit, special).")
+        return None # Indicate failure
+
+    # Start building the password by guaranteeing one of each required type
+    password_chars = []
+    password_chars.append(secrets.choice(lowercase_letters))
+    password_chars.append(secrets.choice(uppercase_letters))
+    password_chars.append(secrets.choice(digits))
+    password_chars.append(secrets.choice(special_chars))
+
+    # Create the combined pool of all allowed characters for the remaining length
+    all_chars = lowercase_letters + uppercase_letters + digits + special_chars
+
+    # Fill the rest of the password length with random choices from the combined pool
+    remaining_length = length - 4 # We already added 4 guaranteed characters
+    for _ in range(remaining_length):
+        password_chars.append(secrets.choice(all_chars))
+
+    # Shuffle the list thoroughly to mix the guaranteed characters randomly
+    # Using secrets.SystemRandom().shuffle() for potentially better shuffling than random.shuffle
+    try:
+        # SystemRandom isn't available on all OSs, fallback gracefully if needed
+        rng = secrets.SystemRandom()
+        rng.shuffle(password_chars)
+    except NotImplementedError:
+        # Fallback to standard random shuffle if SystemRandom unavailable
+        import random
+        random.shuffle(password_chars)
+
+
+    # Join the characters back into the final password string
+    password = "".join(password_chars)
+    return password
+
+def main():
+    """
+    Main function to get user input and display the password.
+    """
+    print("--- Secure Password Generator ---")
+
+    # --- Requirement: Allow users to set parameters (e.g., length) ---
+    while True:
+        try:
+            # Get desired length from the user
+            length_input = input("Enter the desired password length (minimum 4, recommend 12+): ")
+            password_length = int(length_input)
+
+            # Basic validation for positive length
+            if password_length <= 0:
+                 print("Password length must be a positive number.")
+            # The generate function handles the minimum length of 4 internally
+            # elif password_length < 4:
+            #    print("Warning: Minimum length of 4 required to guarantee all character types.")
+            else:
+                break # Valid input length received
+
+        except ValueError:
+            print("Invalid input. Please enter a whole number for the length.")
+
+    # Generate the password using the core function
+    generated_password = generate_secure_password(password_length)
+
+    # --- Requirement: Display and optionally copy the generated password ---
+    if generated_password:
+        print("\n------------------------------------")
+        print("Generated Secure Password:")
+        print(f" >> {generated_password} <<")
+        print("------------------------------------")
+        print("(You can select and copy the password above)")
+    else:
+        print("\nPassword generation failed due to insufficient length.")
+        sys.exit(1) # Exit with an error code if password wasn't generated
+
+# Standard Python entry point
+if __name__ == "__main__":
+    main()
